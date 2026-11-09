@@ -1,0 +1,32 @@
+# CashyBank - local database environment for the MIT 8103 portfolio.
+# Start:  docker compose up -d
+# Connect: docker exec -it cashybank-postgres psql -U cashybank -d cashybank
+services:
+  postgres:
+    image: postgres:16
+    container_name: cashybank-postgres
+    environment:
+      POSTGRES_USER: cashybank
+      POSTGRES_PASSWORD: cashybank_dev_password
+      POSTGRES_DB: cashybank
+    ports:
+      - "5433:5432" # 5433 on the host so it never clashes with a local Postgres on 5432
+    volumes:
+      - cashybank_pgdata:/var/lib/postgresql/data
+      - ./:/portfolio:ro # lets psql inside the container run the SQL files with \i
+
+  # MongoDB for Portfolio 4.
+  # Connect: docker exec -it cashybank-mongo mongosh cashybank
+  mongo:
+    image: mongo:7.0
+    container_name: cashybank-mongo
+    command: ["--replSet", "rs0", "--bind_ip_all"] # a one-node replica set, needed for multi-document transactions
+    ports:
+      - "27018:27017" # 27018 on the host so it never clashes with a local MongoDB on 27017
+    volumes:
+      - cashybank_mongodata:/data/db
+      - ./:/portfolio:ro # lets mongosh inside the container run the files with load()
+
+volumes:
+  cashybank_pgdata:
+  cashybank_mongodata:
